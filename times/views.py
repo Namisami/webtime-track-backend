@@ -42,6 +42,7 @@ def create_intervals(request):
                 start_time=item['start_time'],
                 end_time=item['end_time'],
                 date=item['date'],
+                favicon_url=item['favicon_url'],
             )
             
             interval.full_clean()
@@ -50,7 +51,8 @@ def create_intervals(request):
                 'url': interval.url,
                 'date': interval.date,
                 'start_time': interval.start_time,
-                'end_time': interval.end_time
+                'end_time': interval.end_time,
+                'favicon_url': interval.favicon_url,
             })
             
             intervals.append(interval)
@@ -63,7 +65,8 @@ def create_intervals(request):
                     url=item['url'],
                     date=item['date'],
                     start_time=item['start_time'],
-                    end_time=item['end_time']
+                    end_time=item['end_time'],
+                    favicon_url=item['favicon_url'],
                 )
             
             existing = TimeInterval.objects.filter(q_objects).values_list(
@@ -89,7 +92,7 @@ def create_intervals(request):
                     stats_updates[stats_key] = {
                         'session_count': 0,
                         'time_count': 0,
-                        'favicon_url': item['favicon_url']
+                        'favicon_url': interval.favicon_url
                     }
                 
                 stats_updates[stats_key]['session_count'] += 1
@@ -102,7 +105,7 @@ def create_intervals(request):
                 defaults={
                     'session_count': data['session_count'],
                     'time_count': data['time_count'],
-                    'favicon_url': data['favicon_url'] or Statistics.objects.filter(url=url).values_list('favicon_url', flat=True).first()
+                    'favicon_url': data.get('favicon_url') or Statistics.objects.filter(url=url).values_list('favicon_url', flat=True).first()
                 }
             )
 

@@ -4,6 +4,7 @@ from utils.ms_to_time import ms_to_time
 
 class TimeInterval(models.Model):
     url = models.URLField(max_length=500, verbose_name="Ссылка")
+    favicon_url = models.URLField(max_length=500, verbose_name="Ссылка на иконку", null=True, blank=True)
     start_time = models.PositiveIntegerField(verbose_name="Время начала (мс)")
     end_time = models.PositiveIntegerField(verbose_name="Время окончания (мс)")
     date = models.DateField(verbose_name="Дата")
