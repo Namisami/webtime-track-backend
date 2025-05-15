@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.core.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
+from urllib.parse import urlparse
 from .models import TimeInterval, Statistics
 from .serializers import TimeIntervalSerializer
 import json
@@ -30,19 +31,21 @@ class TimeIntervalViewSet(viewsets.ModelViewSet):
 def create_intervals(request):
     try:
         data = json.loads(request.body)
-        intervals_data = data.get('intervals', [])
         
+        intervals_data = data.get('intervals', [])
         intervals = []
         check_duplicates = []
         stats_updates = {}
 
         for item in intervals_data:
+            favicon_url = item.get('faviconUrl')
+            
             interval = TimeInterval(
-                url=item['url'],
-                start_time=item['start_time'],
-                end_time=item['end_time'],
+                start_time=item['startTime'],
+                end_time=item['endTime'],
                 date=item['date'],
-                favicon_url=item['favicon_url'],
+                url=item['url'] if len(item['url']) <= 500 else '{url.scheme}://{url.netloc}'.format(url=urlparse(item["url"])),
+                favicon_url=favicon_url if favicon_url and len(favicon_url) <= 500 else None,
             )
             
             interval.full_clean()

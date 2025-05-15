@@ -1,10 +1,11 @@
 from django.db import models
 from django.forms import ValidationError
 from utils.ms_to_time import ms_to_time
+from .validators import BrowserURLValidator
 
 class TimeInterval(models.Model):
-    url = models.URLField(max_length=500, verbose_name="Ссылка")
-    favicon_url = models.URLField(max_length=500, verbose_name="Ссылка на иконку", null=True, blank=True)
+    url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка")
+    favicon_url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка на иконку", null=True, blank=True)
     start_time = models.PositiveIntegerField(verbose_name="Время начала (мс)")
     end_time = models.PositiveIntegerField(verbose_name="Время окончания (мс)")
     date = models.DateField(verbose_name="Дата")
@@ -34,8 +35,8 @@ class TimeInterval(models.Model):
 
 
 class Statistics(models.Model):
-    url = models.URLField(max_length=500, verbose_name="Ссылка на сайт")
-    favicon_url = models.URLField(max_length=500, verbose_name="Ссылка на иконку", null=True, blank=True)
+    url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка на сайт")
+    favicon_url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка на иконку", null=True, blank=True)
     session_count = models.PositiveIntegerField(default=0, verbose_name="Количество сессий")
     time_count = models.PositiveIntegerField(default=0, verbose_name="Проведенное время (мс)")
     period_date = models.DateField(verbose_name="Дата периода")
@@ -58,4 +59,3 @@ class Statistics(models.Model):
         ]
         verbose_name = "Статистика"
         verbose_name_plural = "Статистика"
-    
