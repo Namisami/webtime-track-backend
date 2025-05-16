@@ -1,5 +1,6 @@
 # views.py
-from rest_framework import viewsets, pagination
+from rest_framework import viewsets, pagination, views, status
+from rest_framework.response import Response
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -8,9 +9,10 @@ from django.db.models import F, Q
 from django.core.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from urllib.parse import urlparse
-from .models import TimeInterval, Statistics
-from .serializers import TimeIntervalSerializer
+from datetime import datetime
 import json
+from .models import TimeInterval, Statistics
+from .serializers import TimeIntervalSerializer, StatisticsSerializer
 
 class TimeIntervalViewSet(viewsets.ModelViewSet):
     queryset = TimeInterval.objects.all().order_by('-date', 'start_time')
@@ -24,6 +26,52 @@ class TimeIntervalViewSet(viewsets.ModelViewSet):
 
     # def perform_create(self, serializer):
         # serializer.save()  # Можно добавить owner=self.request.user и т.д.
+        
+
+class StatisticsRangeView(views.APIView):
+    pagination_class = pagination.PageNumberPagination
+    pagination_class.page_size = 20
+    
+    def get(self, request):
+        period_date_start = request.query_params.get('period_date_start')
+        period_date_end = request.query_params.get('period_date_end')
+
+        if not period_date_start or not period_date_end:
+            return Response(
+                {"error": "Оба параметра period_date_start и period_date_end обязательны"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            start_date = datetime.strptime(period_date_start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(period_date_end, "%Y-%m-%d").date()
+        except ValueError:
+            return Response(
+                {"error": "Неверный формат даты. Используйте YYYY-MM-DD"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if start_date > end_date:
+            return Response(
+                {"error": "Дата начала периода должна быть раньше или равна дате окончания"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        statistics = Statistics.objects.filter(
+            period_date__gte=start_date,
+            period_date__lte=end_date
+        ).order_by('-time_count')
+
+        if not statistics.exists():
+            return Response(
+                {"message": "Данные за указанный период не найдены"},
+                status=status.HTTP_200_OK
+            )
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(statistics, request)
+        serializer = StatisticsSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -45,7 +93,7 @@ def create_intervals(request):
                 end_time=item['endTime'],
                 date=item['date'],
                 url=item['url'] if len(item['url']) <= 500 else '{url.scheme}://{url.netloc}'.format(url=urlparse(item["url"])),
-                favicon_url=favicon_url if favicon_url and len(favicon_url) <= 500 else None,
+                favicon_url=favicon_url if favicon_url is not None and len(favicon_url) <= 500 else None,
             )
             
             interval.full_clean()

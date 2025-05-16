@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TimeInterval
+from .models import TimeInterval, Statistics
 
 class TimeIntervalSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,3 +32,14 @@ class TimeIntervalSerializer(serializers.ModelSerializer):
             )
         
         return data
+
+
+class StatisticsSerializer(serializers.ModelSerializer):
+    sessionCount = serializers.IntegerField(source='session_count')
+    timeCount = serializers.IntegerField(source='time_count')
+    periodDate = serializers.DateField(source='period_date')
+    faviconUrl = serializers.CharField(source='favicon_url')
+
+    class Meta:
+        model = Statistics
+        fields = ['url', 'faviconUrl', 'sessionCount', 'timeCount', 'periodDate']
