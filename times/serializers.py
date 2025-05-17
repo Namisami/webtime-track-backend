@@ -13,10 +13,6 @@ class TimeIntervalSerializer(serializers.ModelSerializer):
         }
         
     def validate(self, data):
-        # if (data['start_time'] is None):
-        #     raise serializers.ValidationError(
-        #         "Время начала является обязате"
-        #     )
         if data['start_time'] >= data['end_time']:
             raise serializers.ValidationError(
                 "Время окончания должно быть позже времени начала"
@@ -39,7 +35,8 @@ class StatisticsSerializer(serializers.ModelSerializer):
     timeCount = serializers.IntegerField(source='time_count')
     periodDate = serializers.DateField(source='period_date')
     faviconUrl = serializers.CharField(source='favicon_url')
+    intervals = TimeIntervalSerializer(many=True)
 
     class Meta:
         model = Statistics
-        fields = ['url', 'faviconUrl', 'sessionCount', 'timeCount', 'periodDate']
+        fields = ['url', 'faviconUrl', 'sessionCount', 'timeCount', 'periodDate', 'intervals']

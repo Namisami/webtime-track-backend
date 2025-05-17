@@ -1,7 +1,20 @@
 from django.db import models
+from django.db.models import Value, F, Func
 from django.forms import ValidationError
 from utils.ms_to_time import ms_to_time
 from .validators import BrowserURLValidator
+from urllib.parse import urlparse
+
+class TimeIntervalManager(models.Manager):
+    def filter_by_hostname(self, hostname):
+        return self.annotate(
+            url_hostname=Func(
+                F('url'),
+                Value(r'^(?:https?://)?([^/]+)'),
+                function='SUBSTRING',
+                output_field=models.CharField()
+            )
+        ).filter(url_hostname=hostname)
 
 class TimeInterval(models.Model):
     url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка")
@@ -9,6 +22,8 @@ class TimeInterval(models.Model):
     start_time = models.PositiveIntegerField(verbose_name="Время начала (мс)")
     end_time = models.PositiveIntegerField(verbose_name="Время окончания (мс)")
     date = models.DateField(verbose_name="Дата")
+    
+    objects = TimeIntervalManager()
 
     def __str__(self):
         return f"{self.url} [{self.date}]: {ms_to_time(self.start_time)}-{ms_to_time(self.end_time)}"
@@ -42,10 +57,15 @@ class Statistics(models.Model):
     period_date = models.DateField(verbose_name="Дата периода")
     
     @property
-    def intervals(self):
-        return TimeInterval.objects.filter(
-            url=self.url,
-            date=self.period_date,
+    def intervals(self):        
+        parsed_url = urlparse(self.url)
+        if not parsed_url.hostname:
+            parsed_url = urlparse(f"http://{self.url}")
+            
+        return TimeInterval.objects.filter_by_hostname(
+            parsed_url.hostname
+        ).filter(
+            date=self.period_date
         ).order_by('-date', 'start_time')
     
     def __str__(self):

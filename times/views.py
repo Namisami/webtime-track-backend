@@ -151,7 +151,7 @@ def create_intervals(request):
 
         for (url, date), data in stats_updates.items():
             stat, created = Statistics.objects.update_or_create(
-                url=url,
+                url=urlparse(url).hostname,
                 period_date=date,
                 defaults={
                     'session_count': data['session_count'],
