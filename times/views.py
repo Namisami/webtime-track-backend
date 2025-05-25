@@ -1,6 +1,7 @@
 # views.py
-from rest_framework import viewsets, pagination, views, status
+from rest_framework import viewsets, pagination, views, status, permissions
 from rest_framework.response import Response
+from rest_framework.decorators import permission_classes, api_view
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -19,7 +20,6 @@ class TimeIntervalViewSet(viewsets.ModelViewSet):
     serializer_class = TimeIntervalSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['date', 'start_time', 'end_time']
-    # permission_classes = [permissions.IsAuthenticatedOrReadOnly] 
     
     pagination_class = pagination.PageNumberPagination
     pagination_class.page_size = 20
@@ -29,6 +29,7 @@ class TimeIntervalViewSet(viewsets.ModelViewSet):
         
 
 class StatisticsRangeView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated] 
     pagination_class = pagination.PageNumberPagination
     pagination_class.page_size = 20
     
@@ -59,7 +60,8 @@ class StatisticsRangeView(views.APIView):
 
         statistics = Statistics.objects.filter(
             period_date__gte=start_date,
-            period_date__lte=end_date
+            period_date__lte=end_date,
+            user__pk=request.user.pk,
         ).order_by('-time_count')
 
         if not statistics.exists():
@@ -74,8 +76,9 @@ class StatisticsRangeView(views.APIView):
         return paginator.get_paginated_response(serializer.data)
 
 @csrf_exempt
-@require_http_methods(["POST"])
 @transaction.atomic
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
 def create_intervals(request):
     try:
         data = json.loads(request.body)
@@ -94,6 +97,7 @@ def create_intervals(request):
                 date=item['date'],
                 url=item['url'] if len(item['url']) <= 500 else '{url.scheme}://{url.netloc}'.format(url=urlparse(item["url"])),
                 favicon_url=favicon_url if favicon_url is not None and len(favicon_url) <= 500 else None,
+                user=request.user,
             )
             
             interval.full_clean()
@@ -104,6 +108,7 @@ def create_intervals(request):
                 'start_time': interval.start_time,
                 'end_time': interval.end_time,
                 'favicon_url': interval.favicon_url,
+                'user': interval.user,
             })
             
             intervals.append(interval)
@@ -118,13 +123,14 @@ def create_intervals(request):
                     start_time=item['start_time'],
                     end_time=item['end_time'],
                     favicon_url=item['favicon_url'],
+                    user=item['user'],
                 )
             
             existing = TimeInterval.objects.filter(q_objects).values_list(
-                'url', 'date', 'start_time', 'end_time'
+                'url', 'date', 'start_time', 'end_time', 'user'
             )
             existing_intervals = {
-                (item[0], item[1], item[2], item[3]) for item in existing
+                (item[0], item[1], item[2], item[3], item[4]) for item in existing
             }
             
         new_intervals = []
@@ -133,7 +139,8 @@ def create_intervals(request):
                 interval.url,
                 interval.date,
                 interval.start_time,
-                interval.end_time
+                interval.end_time,
+                interval.user,
             )
             if key not in existing_intervals:
                 new_intervals.append(interval)
@@ -153,6 +160,7 @@ def create_intervals(request):
             stat, created = Statistics.objects.update_or_create(
                 url=urlparse(url).hostname,
                 period_date=date,
+                user=request.user,
                 defaults={
                     'session_count': data['session_count'],
                     'time_count': data['time_count'],

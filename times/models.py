@@ -4,6 +4,7 @@ from django.forms import ValidationError
 from utils.ms_to_time import ms_to_time
 from .validators import BrowserURLValidator
 from urllib.parse import urlparse
+from users.models import CustomUser
 
 
 class TimeIntervalManager(models.Manager):
@@ -24,6 +25,7 @@ class TimeInterval(models.Model):
     start_time = models.PositiveIntegerField(verbose_name="Время начала (с)")
     end_time = models.PositiveIntegerField(verbose_name="Время окончания (с)")
     date = models.DateField(verbose_name="Дата")
+    user = models.ForeignKey(to=CustomUser, on_delete=models.CASCADE, verbose_name="Пользователь")
     
     objects = TimeIntervalManager()
 
@@ -57,6 +59,7 @@ class Statistics(models.Model):
     session_count = models.PositiveIntegerField(default=0, verbose_name="Количество сессий")
     time_count = models.PositiveIntegerField(default=0, verbose_name="Проведенное время (с)")
     period_date = models.DateField(verbose_name="Дата периода")
+    user = models.ForeignKey(to=CustomUser, on_delete=models.CASCADE, verbose_name="Пользователь")
     
     @property
     def intervals(self):        
