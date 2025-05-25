@@ -5,6 +5,7 @@ from utils.ms_to_time import ms_to_time
 from .validators import BrowserURLValidator
 from urllib.parse import urlparse
 
+
 class TimeIntervalManager(models.Manager):
     def filter_by_hostname(self, hostname):
         return self.annotate(
@@ -16,11 +17,12 @@ class TimeIntervalManager(models.Manager):
             )
         ).filter(url_hostname=hostname)
 
+
 class TimeInterval(models.Model):
     url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка")
     favicon_url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка на иконку", null=True, blank=True)
-    start_time = models.PositiveIntegerField(verbose_name="Время начала (мс)")
-    end_time = models.PositiveIntegerField(verbose_name="Время окончания (мс)")
+    start_time = models.PositiveIntegerField(verbose_name="Время начала (с)")
+    end_time = models.PositiveIntegerField(verbose_name="Время окончания (с)")
     date = models.DateField(verbose_name="Дата")
     
     objects = TimeIntervalManager()
@@ -53,7 +55,7 @@ class Statistics(models.Model):
     url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка на сайт")
     favicon_url = models.CharField(max_length=500, validators=[BrowserURLValidator()], verbose_name="Ссылка на иконку", null=True, blank=True)
     session_count = models.PositiveIntegerField(default=0, verbose_name="Количество сессий")
-    time_count = models.PositiveIntegerField(default=0, verbose_name="Проведенное время (мс)")
+    time_count = models.PositiveIntegerField(default=0, verbose_name="Проведенное время (с)")
     period_date = models.DateField(verbose_name="Дата периода")
     
     @property
