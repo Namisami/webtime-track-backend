@@ -16,6 +16,7 @@ from .models import TimeInterval, Statistics
 from .serializers import TimeIntervalSerializer, StatisticsSerializer
 
 class TimeIntervalViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated] 
     queryset = TimeInterval.objects.all().order_by('-date', 'start_time')
     serializer_class = TimeIntervalSerializer
     filter_backends = [DjangoFilterBackend]
@@ -30,8 +31,6 @@ class TimeIntervalViewSet(viewsets.ModelViewSet):
 
 class StatisticsRangeView(views.APIView):
     permission_classes = [permissions.IsAuthenticated] 
-    pagination_class = pagination.PageNumberPagination
-    pagination_class.page_size = 20
     
     def get(self, request):
         period_date_start = request.query_params.get('period_date_start')
@@ -70,10 +69,8 @@ class StatisticsRangeView(views.APIView):
                 status=status.HTTP_200_OK
             )
 
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(statistics, request)
-        serializer = StatisticsSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        serializer = StatisticsSerializer(statistics, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 @csrf_exempt
 @transaction.atomic
