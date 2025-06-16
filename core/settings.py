@@ -31,7 +31,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -48,11 +47,11 @@ INSTALLED_APPS = [
     'users',
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
-    ),
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework.authentication.TokenAuthentication',
+#     ),
+# }
 
 AUTH_USER_MODEL = "users.CustomUser"
 
@@ -69,6 +68,10 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 
 ALLOWED_HOSTS = ['*'] 
+
+CSRF_TRUSTED_ORIGINS = [
+    'chrome-extension://loemlecnamjpjjkhjioghidjjglmpadb',
+]
 
 TEMPLATES = [
     {

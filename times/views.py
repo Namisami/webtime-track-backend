@@ -1,9 +1,7 @@
-# views.py
 from rest_framework import viewsets, pagination, views, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes, api_view
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from django.db.models import F, Q
@@ -24,9 +22,6 @@ class TimeIntervalViewSet(viewsets.ModelViewSet):
     
     pagination_class = pagination.PageNumberPagination
     pagination_class.page_size = 20
-
-    # def perform_create(self, serializer):
-        # serializer.save()  # Можно добавить owner=self.request.user и т.д.
         
 
 class StatisticsRangeView(views.APIView):
@@ -78,7 +73,7 @@ class StatisticsRangeView(views.APIView):
 @permission_classes([permissions.IsAuthenticated])
 def create_intervals(request):
     try:
-        data = json.loads(request.body)
+        data = request.data
         
         intervals_data = data.get('intervals', [])
         intervals = []
